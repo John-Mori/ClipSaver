@@ -86,7 +86,7 @@ GitHubへのpush、GitHub repo作成、Cloudflareへのデプロイは行って�
 |---|---|
 | A. 動画ページ(yt-dlpに寄せたヘッダ・Cookie) | 動画によって通る。`vt.tiktok.com/ZSe4FqkKd` は通った(動画と音声)。`@waffleskkw/video/7678161526284602644` は HTTP 200 の遮断用ページで不可 |
 | B. `embed/v2` | 投稿者名・説明文・サムネは取れる。動画アドレスは取れず、Aが落ちた時の補助情報にだけ使う |
-| C. アプリAPI(`aweme/v1/multi/aweme/detail`) | 本番では中身の空の応答で不可 |
+| C. アプリAPI(`aweme/v1/multi/aweme/detail`) | 本番では通らなかった(waffleskkw の動画はここも抜けてDまで落ちた) |
 | D. 外部の公開API(tikdownloader) | 通る。A〜Cが全部落ちた時だけ使う(`PUBLIC_API_FALLBACK`)。音声は取れない |
 
 ### 本番で保存したファイル(ffprobeで確認)
