@@ -1,5 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
+const liveBaseURL = process.env.CLIPSAVER_BASE_URL;
+
 export default defineConfig({
   testDir: './tests',
   testMatch: 'ui.spec.mjs',
@@ -7,10 +9,10 @@ export default defineConfig({
   fullyParallel: false,
   reporter: 'line',
   use: {
-    baseURL: 'http://127.0.0.1:18790',
+    baseURL: liveBaseURL || 'http://127.0.0.1:18790',
     locale: 'ja-JP'
   },
-  webServer: {
+  webServer: liveBaseURL ? undefined : {
     command: 'python -c "import os,runpy; os.environ[\'CLIPSAVER_PORT\']=\'18790\'; runpy.run_path(\'local/server.py\',run_name=\'__main__\')"',
     url: 'http://127.0.0.1:18790/',
     reuseExistingServer: false,

@@ -408,6 +408,7 @@
         NOT_FOUND: '動画が見つからない。削除済みか、URLが変わった可能性がある。',
         PARSE_FAILED: '動画情報を読み取れなかった。TikTok側の形式が変わった可能性がある。',
         NO_MEDIA: '保存できる動画や音声が見つからなかった。',
+        RATE_LIMITED: '1分あたりの回数上限に達した。少し待ってから試してくれ。',
         UPSTREAM_FAILED: 'TikTokから情報を取得できなかった。時間を空けて試してくれ。',
         FILE_EXPIRED: '保存URLの期限が切れた。もう一度「取得」からやり直してくれ。'
       };
@@ -482,7 +483,6 @@
         description.textContent = item.desc || '説明文は無い。';
         downloadRow.replaceChildren();
         addDownload('動画を保存(ロゴなし)', files.play);
-        addDownload('動画を保存(ロゴあり)', files.download);
         addDownload('音声を保存', files.music);
         if (!downloadRow.children.length) {
           throw Object.assign(new Error('No downloadable media'), { code: 'NO_MEDIA' });

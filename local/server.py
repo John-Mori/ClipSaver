@@ -237,7 +237,7 @@ def resolve_video(url: str) -> dict[str, Any]:
 
     files: dict[str, str] = {
         key: f"/api/file?id={urllib.parse.quote(video_id)}&kind={key}"
-        for key in ("play", "download")
+        for key in ("play",)
         if direct_urls.get(key)
     }
     if has_audio:
@@ -435,7 +435,7 @@ class ClipSaverHandler(BaseHTTPRequestHandler):
     def _serve_file(self, query: Mapping[str, list[str]]) -> None:
         video_id = (query.get("id") or [""])[0]
         kind = (query.get("kind") or [""])[0]
-        if not re.fullmatch(r"\d{10,21}", video_id) or kind not in {"play", "download", "music"}:
+        if not re.fullmatch(r"\d{10,21}", video_id) or kind not in {"play", "music"}:
             raise ApiError("INVALID_URL", "idまたはkindが不正")
         entry = _cache_entry(video_id)
         author = _safe_filename(entry.author_id or entry.author_name)

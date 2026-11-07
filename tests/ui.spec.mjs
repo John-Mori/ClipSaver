@@ -17,6 +17,10 @@ const mockResult = {
   }
 };
 
+const liveRun = Boolean(process.env.CLIPSAVER_BASE_URL);
+const testVideoUrl = process.env.CLIPSAVER_TEST_URL
+  || 'https://www.tiktok.com/@muffindrama_us/video/7675708755559959821';
+
 test('URL貼付から保存ボタン表示まで横にはみ出さない', async ({ page }, testInfo) => {
   const errors = [];
   page.on('pageerror', (error) => errors.push(error.message));
@@ -24,20 +28,28 @@ test('URL貼付から保存ボタン表示まで横にはみ出さない', async
     if (message.type() === 'error') errors.push(message.text());
   });
 
-  await page.route('**/api/resolve', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json; charset=utf-8',
-      body: JSON.stringify(mockResult)
+  if (!liveRun) {
+    await page.route('**/api/resolve', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json; charset=utf-8',
+        body: JSON.stringify(mockResult)
+      });
     });
-  });
+  }
 
   await page.goto('/');
-  await page.locator('#video-url').fill('https://www.tiktok.com/@muffindrama_us/video/7675708755559959821');
+  await page.locator('#video-url').fill(testVideoUrl);
   await page.locator('#resolve-button').click();
 
   await expect(page.locator('#result')).toBeVisible();
-  await expect(page.locator('.save-link')).toHaveCount(3);
+  if (liveRun) {
+    await expect(page.locator('.save-link').first()).toBeVisible();
+    await expect(page.getByRole('link', { name: '動画を保存(ロゴなし)' })).toHaveCount(1);
+  } else {
+    await expect(page.locator('.save-link')).toHaveCount(2);
+    await expect(page.getByRole('link', { name: '動画を保存(ロゴあり)' })).toHaveCount(0);
+  }
   await expect(page.locator('#status')).toContainText('取得した');
 
   const layout = await page.evaluate(() => ({

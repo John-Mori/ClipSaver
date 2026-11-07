@@ -49,9 +49,9 @@ TikTokがCloudflareの接続元を遮断した場合、`TIKTOK_BLOCKED`を返し
 {"url":"https://www.tiktok.com/@user/video/1234567890123456789"}
 ```
 
-成功時は投稿者、説明文、サムネイル、取得できた`play`、`download`、`music`だけを返します。失敗時は`error.code`と理由を返します。
+成功時は投稿者、説明文、サムネイル、取得できた`play`、`music`だけを返します。失敗時は`error.code`と理由を返します。
 
-### `GET /api/file?id=...&kind=play|download|music`
+### `GET /api/file?id=...&kind=play|music`
 
 保存用レスポンスを返します。Worker版はTikTokページを再解決してから許可済みCDNへ接続します。ローカル版は直前の`resolve`結果を15分だけメモリに保持します。
 
