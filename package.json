@@ -1,0 +1,15 @@
+{
+  "name": "clipsaver",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "npm --prefix worker test",
+    "test:ui": "playwright test",
+    "typecheck": "npm --prefix worker run typecheck"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.1"
+  }
+}
+
