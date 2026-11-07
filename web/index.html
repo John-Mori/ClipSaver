@@ -1,0 +1,554 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="site-type" content="list-tool">
+  <meta name="api-base" content="/api">
+  <meta name="theme-color" content="#f7f5f0">
+  <title>ClipSaver - TikTok動画を保存</title>
+  <style>
+    :root {
+      --page: #f7f5f0;
+      --surface: #fffdfa;
+      --ink: #1c1917;
+      --muted: #6d625b;
+      --line: #ded7ce;
+      --accent: #fb6a19;
+      --accent-hover: #e85a0d;
+      --accent-soft: #fff0e6;
+      --danger: #a43b22;
+      --shadow: 0 18px 45px rgba(62, 42, 27, .09);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--page);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Yu Gothic UI", sans-serif;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(28px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+    }
+
+    button,
+    input,
+    a {
+      font: inherit;
+    }
+
+    button,
+    .save-link {
+      width: auto;
+      flex: 0 0 auto;
+      min-height: 44px;
+      border-radius: 10px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .page-shell {
+      width: min(100%, 820px);
+      margin: 0 auto;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: .02em;
+    }
+
+    .brand-mark {
+      width: 12px;
+      height: 12px;
+      border: 3px solid var(--accent);
+      border-radius: 50%;
+    }
+
+    .hero {
+      padding: clamp(42px, 8vw, 76px) 0 30px;
+    }
+
+    h1 {
+      max-width: 690px;
+      margin: 0;
+      font-size: clamp(40px, 8vw, 68px);
+      line-height: 1.02;
+      letter-spacing: -.055em;
+    }
+
+    .lead {
+      max-width: 590px;
+      margin: 20px 0 0;
+      color: var(--muted);
+      font-size: clamp(16px, 2.5vw, 19px);
+      line-height: 1.75;
+    }
+
+    .panel {
+      padding: clamp(18px, 4vw, 30px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .url-label {
+      display: block;
+      margin-bottom: 9px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: stretch;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .url-input {
+      width: 100%;
+      min-width: 0;
+      height: 50px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--ink);
+      outline: none;
+    }
+
+    .url-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .paste-button {
+      padding: 0 15px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      font-weight: 750;
+    }
+
+    .action-row,
+    .download-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .action-row {
+      margin-top: 14px;
+    }
+
+    .primary-button {
+      padding: 0 22px;
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #211008;
+      font-weight: 850;
+    }
+
+    .primary-button:hover {
+      border-color: var(--accent-hover);
+      background: var(--accent-hover);
+    }
+
+    .primary-button:disabled {
+      cursor: wait;
+      opacity: .62;
+    }
+
+    .status {
+      min-height: 24px;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .status.error {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    .result {
+      margin-top: 24px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .result[hidden],
+    .ios-note[hidden] {
+      display: none;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: minmax(210px, .75fr) minmax(0, 1.25fr);
+    }
+
+    .cover-wrap {
+      min-height: 260px;
+      background: #eee8df;
+    }
+
+    .cover {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: 260px;
+      max-height: 500px;
+      object-fit: cover;
+    }
+
+    .cover-fallback {
+      display: grid;
+      min-height: 260px;
+      place-items: center;
+      padding: 24px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .result-body {
+      min-width: 0;
+      padding: clamp(20px, 4vw, 32px);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent-hover);
+      font-size: 12px;
+      font-weight: 850;
+      letter-spacing: .09em;
+      text-transform: uppercase;
+    }
+
+    .author {
+      margin: 0;
+      overflow-wrap: anywhere;
+      font-size: clamp(22px, 4vw, 30px);
+      line-height: 1.2;
+    }
+
+    .description {
+      margin: 14px 0 22px;
+      color: var(--muted);
+      line-height: 1.7;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .save-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 14px;
+      border: 1px solid var(--accent);
+      background: var(--accent-soft);
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .save-link:hover {
+      background: var(--accent);
+    }
+
+    .ios-note {
+      margin: 16px 0 0;
+      padding: 12px 14px;
+      border-left: 3px solid var(--accent);
+      background: var(--accent-soft);
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .footnote {
+      margin: 22px 4px 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 620px) {
+      body {
+        padding-top: max(18px, env(safe-area-inset-top));
+      }
+
+      .hero {
+        padding-top: 36px;
+      }
+
+      h1 {
+        font-size: clamp(38px, 13vw, 56px);
+      }
+
+      .input-row {
+        flex-wrap: wrap;
+      }
+
+      .url-input {
+        flex: 1 1 100%;
+      }
+
+      .paste-button {
+        flex: 0 0 auto;
+      }
+
+      .result-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .cover-wrap,
+      .cover,
+      .cover-fallback {
+        min-height: 230px;
+        max-height: 390px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page-shell">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span>ClipSaver</div>
+
+    <header class="hero">
+      <h1>TikTokの動画を、手元へ。</h1>
+      <p class="lead">動画URLを貼るだけで、取得できた保存形式を表示する。短縮URLにも対応。</p>
+    </header>
+
+    <section class="panel" aria-labelledby="url-label">
+      <form id="resolve-form" novalidate>
+        <label class="url-label" id="url-label" for="video-url">TikTok動画のURL</label>
+        <div class="input-row">
+          <input class="url-input" id="video-url" name="url" type="url" size="1" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="https://www.tiktok.com/@user/video/..." required>
+          <button class="paste-button" id="paste-button" type="button">貼り付け</button>
+        </div>
+        <div class="action-row">
+          <button class="primary-button" id="resolve-button" type="submit">取得</button>
+        </div>
+        <div class="status" id="status" role="status" aria-live="polite">URLを貼ると、保存できる形式をここに出す。</div>
+      </form>
+    </section>
+
+    <section class="result" id="result" aria-live="polite" hidden>
+      <div class="result-grid">
+        <div class="cover-wrap" id="cover-wrap"></div>
+        <div class="result-body">
+          <p class="eyebrow">取得結果</p>
+          <h2 class="author" id="author"></h2>
+          <p class="description" id="description"></p>
+          <div class="download-row" id="download-row"></div>
+          <p class="ios-note" id="ios-note" hidden>iPhoneで保存が始まらない時は、開いた動画を長押しして「ビデオを保存」を選ぶ。</p>
+        </div>
+      </div>
+    </section>
+
+    <p class="footnote">自分が撮った動画・許諾を得た動画の保存に使う。他人の動画を再配布する場合は、権利者の許可が必要。</p>
+  </main>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const apiBase = (document.querySelector('meta[name="api-base"]')?.content || '/api').replace(/\/$/, '');
+      const form = document.getElementById('resolve-form');
+      const input = document.getElementById('video-url');
+      const pasteButton = document.getElementById('paste-button');
+      const resolveButton = document.getElementById('resolve-button');
+      const status = document.getElementById('status');
+      const result = document.getElementById('result');
+      const coverWrap = document.getElementById('cover-wrap');
+      const author = document.getElementById('author');
+      const description = document.getElementById('description');
+      const downloadRow = document.getElementById('download-row');
+      const iosNote = document.getElementById('ios-note');
+      const isIOS = /iP(?:hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+      const errorMessages = {
+        INVALID_URL: 'TikTokの動画URLではない。URLを確認してくれ。',
+        PRIVATE_VIDEO: '非公開か、ログインが必要な動画で取得できない。',
+        PHOTO_POST_NO_VIDEO: '写真投稿のため、保存できる動画が無い。',
+        TIKTOK_BLOCKED: 'TikTok側にアクセスを止められた。少し時間を空けて、もう一度試してくれ。',
+        NOT_FOUND: '動画が見つからない。削除済みか、URLが変わった可能性がある。',
+        PARSE_FAILED: '動画情報を読み取れなかった。TikTok側の形式が変わった可能性がある。',
+        NO_MEDIA: '保存できる動画や音声が見つからなかった。',
+        UPSTREAM_FAILED: 'TikTokから情報を取得できなかった。時間を空けて試してくれ。',
+        FILE_EXPIRED: '保存URLの期限が切れた。もう一度「取得」からやり直してくれ。'
+      };
+
+      function setStatus(message, isError = false) {
+        status.textContent = message;
+        status.classList.toggle('error', isError);
+      }
+
+      function endpoint(path) {
+        return `${apiBase}${path}`;
+      }
+
+      function fileUrl(value) {
+        if (/^https?:\/\//i.test(value)) return value;
+        const base = /^https?:\/\//i.test(apiBase) ? new URL(apiBase).origin : location.origin;
+        return new URL(value, `${base}/`).href;
+      }
+
+      function resetResult() {
+        result.hidden = true;
+        coverWrap.replaceChildren();
+        downloadRow.replaceChildren();
+        author.textContent = '';
+        description.textContent = '';
+        iosNote.hidden = true;
+      }
+
+      function renderCover(url, label) {
+        coverWrap.replaceChildren();
+        if (!url) {
+          const fallback = document.createElement('div');
+          fallback.className = 'cover-fallback';
+          fallback.textContent = 'サムネイルは取得できなかった。';
+          coverWrap.append(fallback);
+          return;
+        }
+
+        const image = document.createElement('img');
+        image.className = 'cover';
+        image.src = url;
+        image.alt = label ? `${label}の動画サムネイル` : '動画サムネイル';
+        image.addEventListener('error', () => {
+          const fallback = document.createElement('div');
+          fallback.className = 'cover-fallback';
+          fallback.textContent = 'サムネイルを読み込めなかった。';
+          coverWrap.replaceChildren(fallback);
+        }, { once: true });
+        coverWrap.append(image);
+      }
+
+      function addDownload(label, url) {
+        if (!url) return;
+        const link = document.createElement('a');
+        link.className = 'save-link';
+        link.href = fileUrl(url);
+        link.textContent = label;
+        link.download = '';
+        link.rel = 'noopener';
+        link.addEventListener('click', () => {
+          if (isIOS) iosNote.hidden = false;
+        });
+        downloadRow.append(link);
+      }
+
+      function renderResult(data) {
+        const item = data.item || {};
+        const files = data.files || {};
+        const authorLabel = item.author?.name || item.author?.uniqueId || '投稿者名は取得できなかった';
+        renderCover(item.cover, authorLabel);
+        author.textContent = authorLabel;
+        description.textContent = item.desc || '説明文は無い。';
+        downloadRow.replaceChildren();
+        addDownload('動画を保存(ロゴなし)', files.play);
+        addDownload('動画を保存(ロゴあり)', files.download);
+        addDownload('音声を保存', files.music);
+        if (!downloadRow.children.length) {
+          throw Object.assign(new Error('No downloadable media'), { code: 'NO_MEDIA' });
+        }
+        result.hidden = false;
+      }
+
+      async function readJson(response) {
+        const text = await response.text();
+        try {
+          return text ? JSON.parse(text) : {};
+        } catch {
+          return { ok: false, error: { code: 'UPSTREAM_FAILED', message: text.slice(0, 180) } };
+        }
+      }
+
+      pasteButton.addEventListener('click', async () => {
+        try {
+          const text = await navigator.clipboard.readText();
+          if (text) {
+            input.value = text.trim();
+            input.focus();
+          }
+        } catch {
+          input.focus();
+        }
+      });
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const url = input.value.trim();
+        resetResult();
+
+        if (!url) {
+          setStatus('TikTok動画のURLを貼ってくれ。', true);
+          input.focus();
+          return;
+        }
+
+        resolveButton.disabled = true;
+        resolveButton.textContent = '取得中';
+        setStatus('TikTokから動画情報を取得している。');
+
+        try {
+          const response = await fetch(endpoint('/resolve'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url })
+          });
+          const data = await readJson(response);
+          if (!response.ok || data.ok === false) {
+            const code = data.error?.code || 'UPSTREAM_FAILED';
+            throw Object.assign(new Error(data.error?.message || response.statusText), { code });
+          }
+          renderResult(data);
+          setStatus('取得した。保存したい形式を選べる。');
+        } catch (error) {
+          resetResult();
+          const code = error?.code || 'UPSTREAM_FAILED';
+          setStatus(errorMessages[code] || error?.message || errorMessages.UPSTREAM_FAILED, true);
+        } finally {
+          resolveButton.disabled = false;
+          resolveButton.textContent = '取得';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

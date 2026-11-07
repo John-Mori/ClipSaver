@@ -1,0 +1,9 @@
+node_modules/
+.wrangler/
+.venv/
+__pycache__/
+*.pyc
+*.bak
+_downloads/
+playwright-report/
+test-results/
