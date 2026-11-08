@@ -145,3 +145,15 @@ for (const width of [320, 375, 390, 430, 820, 1280]) {
     console.log(`h1 width=${width} fontSize=${box.fontSize} right=${Math.round(box.right)}`);
   });
 }
+
+for (const width of [320, 390, 1280]) {
+  test(`貼り付けと取得は幅${width}pxで同じ行に並ぶ`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto('/');
+    const paste = await page.locator('#paste-button').boundingBox();
+    const resolveBox = await page.locator('#resolve-button').boundingBox();
+    expect(Math.abs(paste.y - resolveBox.y)).toBeLessThan(2);
+    expect(resolveBox.x).toBeGreaterThan(paste.x + paste.width);
+    expect(resolveBox.x + resolveBox.width).toBeLessThanOrEqual(width);
+  });
+}

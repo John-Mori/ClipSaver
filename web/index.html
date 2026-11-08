@@ -148,16 +148,11 @@
       font-weight: 750;
     }
 
-    .action-row,
     .download-row {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       gap: 10px;
-    }
-
-    .action-row {
-      margin-top: 14px;
     }
 
     .primary-button {
@@ -368,8 +363,6 @@
         <div class="input-row">
           <input class="url-input" id="video-url" name="url" type="url" size="1" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="https://www.tiktok.com/@user/video/..." required>
           <button class="paste-button" id="paste-button" type="button">貼り付け</button>
-        </div>
-        <div class="action-row">
           <button class="primary-button" id="resolve-button" type="submit">取得</button>
         </div>
         <div class="status" id="status" role="status" aria-live="polite">URLを貼ると、保存できる形式をここに出す。</div>
