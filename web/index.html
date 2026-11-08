@@ -86,11 +86,11 @@
     }
 
     h1 {
-      max-width: 690px;
       margin: 0;
-      font-size: clamp(40px, 8vw, 68px);
-      line-height: 1.02;
+      font-size: clamp(20px, calc((100vw - 48px) / 11.6), 68px);
+      line-height: 1.1;
       letter-spacing: -.055em;
+      white-space: nowrap;
     }
 
     .lead {
@@ -279,6 +279,20 @@
       background: var(--accent);
     }
 
+    .share-button {
+      padding: 10px 18px;
+      border: 1px solid var(--accent);
+      background: var(--accent);
+      color: #211008;
+      font-size: 15px;
+      font-weight: 850;
+    }
+
+    .share-button:disabled {
+      cursor: wait;
+      opacity: .62;
+    }
+
     .ios-note {
       margin: 16px 0 0;
       padding: 12px 14px;
@@ -303,10 +317,6 @@
 
       .hero {
         padding-top: 36px;
-      }
-
-      h1 {
-        font-size: clamp(38px, 13vw, 56px);
       }
 
       .input-row {
@@ -374,7 +384,7 @@
           <h2 class="author" id="author"></h2>
           <p class="description" id="description"></p>
           <div class="download-row" id="download-row"></div>
-          <p class="ios-note" id="ios-note" hidden>iPhoneで保存が始まらない時は、開いた動画を長押しして「ビデオを保存」を選ぶ。</p>
+          <p class="ios-note" id="ios-note" hidden></p>
         </div>
       </div>
     </section>
@@ -399,6 +409,20 @@
       const downloadRow = document.getElementById('download-row');
       const iosNote = document.getElementById('ios-note');
       const isIOS = /iP(?:hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const canShareFiles = (() => {
+        try {
+          return typeof navigator.share === 'function'
+            && typeof navigator.canShare === 'function'
+            && navigator.canShare({ files: [new File([''], 'clip.mp4', { type: 'video/mp4' })] });
+        } catch {
+          return false;
+        }
+      })();
+      const notes = {
+        share: '「写真に保存」を押して、出てきたメニューの「ビデオを保存」を選ぶと写真ライブラリに入る。',
+        link: 'iPhoneで保存が始まらない時は、開いた動画を長押しして「ビデオを保存」を選ぶ。'
+      };
+      let prepareToken = 0;
 
       const errorMessages = {
         INVALID_URL: 'TikTokの動画URLではない。URLを確認してくれ。',
@@ -435,6 +459,65 @@
         author.textContent = '';
         description.textContent = '';
         iosNote.hidden = true;
+        prepareToken += 1;
+      }
+
+      function showNote(kind) {
+        iosNote.textContent = notes[kind];
+        iosNote.hidden = false;
+      }
+
+      function fileNameFrom(response, fallback) {
+        const match = /filename="?([^";]+)"?/i.exec(response.headers.get('Content-Disposition') || '');
+        return match ? match[1] : fallback;
+      }
+
+      function addShareSave(url, id) {
+        const token = prepareToken;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'share-button';
+        button.textContent = '写真に保存(準備中)';
+        button.disabled = true;
+        downloadRow.prepend(button);
+        showNote('share');
+
+        let file = null;
+        // iOSは共有メニューを押した直後にしか開かせないため、押す前に動画を読み込んでおく
+        fetch(fileUrl(url))
+          .then(async (response) => {
+            if (!response.ok) {
+              const data = await readJson(response);
+              throw Object.assign(new Error(response.statusText), { code: data.error?.code || 'UPSTREAM_FAILED' });
+            }
+            const blob = await response.blob();
+            return new File([blob], fileNameFrom(response, `${id || 'clip'}.mp4`), { type: 'video/mp4' });
+          })
+          .then((prepared) => {
+            if (token !== prepareToken) return;
+            if (!navigator.canShare({ files: [prepared] })) throw new Error('share unsupported');
+            file = prepared;
+            button.textContent = '写真に保存';
+            button.disabled = false;
+          })
+          .catch((error) => {
+            if (token !== prepareToken) return;
+            button.remove();
+            addDownload('動画を保存(ロゴなし)', url, true);
+            showNote('link');
+            setStatus(error?.code ? errorMessages[error.code] || errorMessages.UPSTREAM_FAILED : '共有メニューで渡せなかったので、保存リンクに切り替えた。', Boolean(error?.code));
+          });
+
+        button.addEventListener('click', async () => {
+          if (!file) return;
+          try {
+            await navigator.share({ files: [file] });
+          } catch (error) {
+            if (error?.name === 'AbortError') return;
+            setStatus('共有メニューを開けなかった。もう一度押すか、下の保存リンクを使ってくれ。', true);
+            if (!downloadRow.querySelector('.save-link[data-kind="play"]')) addDownload('動画を保存(ロゴなし)', url, true);
+          }
+        });
       }
 
       function renderCover(url, label) {
@@ -460,7 +543,7 @@
         coverWrap.append(image);
       }
 
-      function addDownload(label, url) {
+      function addDownload(label, url, prepend = false) {
         if (!url) return;
         const link = document.createElement('a');
         link.className = 'save-link';
@@ -468,10 +551,12 @@
         link.textContent = label;
         link.download = '';
         link.rel = 'noopener';
+        if (prepend) link.dataset.kind = 'play';
         link.addEventListener('click', () => {
-          if (isIOS) iosNote.hidden = false;
+          if (isIOS && link.dataset.kind === 'play') showNote('link');
         });
-        downloadRow.append(link);
+        if (prepend) downloadRow.prepend(link);
+        else downloadRow.append(link);
       }
 
       function renderResult(data) {
@@ -482,7 +567,8 @@
         author.textContent = authorLabel;
         description.textContent = item.desc || '説明文は無い。';
         downloadRow.replaceChildren();
-        addDownload('動画を保存(ロゴなし)', files.play);
+        if (files.play && canShareFiles) addShareSave(files.play, item.id);
+        else addDownload('動画を保存(ロゴなし)', files.play, true);
         addDownload('音声を保存', files.music);
         if (!downloadRow.children.length) {
           throw Object.assign(new Error('No downloadable media'), { code: 'NO_MEDIA' });
